@@ -19,6 +19,7 @@ from memory.answer_formatter import AnswerFormatter
 from memory.test_harness import TestHarness
 from memory.evaluator import Evaluator
 from utils.memory_layer import LLMController
+from utils.llm_config import get_default_model, has_llm_config
 
 logging.basicConfig(
     level=logging.INFO,
@@ -27,8 +28,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class TRGSystem:
-    def __init__(self, model="gpt-4o-mini", embedding_model="minilm", cache_dir="./cache"):
-        self.model = model
+    def __init__(self, model=None, embedding_model="minilm", cache_dir="./cache"):
+        self.model = get_default_model(model)
         self.embedding_model = embedding_model
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(exist_ok=True)
@@ -36,8 +37,8 @@ class TRGSystem:
 
     def _init_components(self):
         api_key = os.getenv('OPENAI_API_KEY')
-        if not api_key:
-            logger.warning("OPENAI_API_KEY not found - using fallback mode")
+        if not has_llm_config():
+            logger.warning("OPENAI_API_KEY or OPENAI_BASE_URL not found - using fallback mode")
             self.llm_controller = None
         else:
             self.llm_controller = LLMController(
@@ -142,7 +143,7 @@ def main():
                        default='test', help='Operation mode')
     parser.add_argument('--input', help='Input file path')
     parser.add_argument('--question', help='Question to ask')
-    parser.add_argument('--model', default='gpt-4o-mini', help='LLM model')
+    parser.add_argument('--model', default=None, help='LLM model (defaults to DEFAULT_MODEL in .env)')
     parser.add_argument('--embedding-model', default='minilm',
                        choices=['minilm', 'openai'], help='Embedding model')
     parser.add_argument('--cache-dir', default='./cache', help='Cache directory')

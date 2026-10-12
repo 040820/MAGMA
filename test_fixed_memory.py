@@ -32,6 +32,7 @@ from memory.memory_builder import MemoryBuilder
 from memory.query_engine import QueryEngine
 from memory.test_harness import TestHarness
 from memory.evaluator import Evaluator
+from utils.llm_config import get_default_model, has_llm_config
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -52,8 +53,8 @@ def score_only_mode(args):
     print("="*70)
 
     api_key = os.getenv('OPENAI_API_KEY')
-    if not api_key:
-        print("Error: OPENAI_API_KEY not found. Cannot perform LLM-based evaluation.")
+    if not has_llm_config():
+        print("Error: OPENAI_API_KEY or OPENAI_BASE_URL not found. Cannot perform LLM-based evaluation.")
         return 1
 
     llm_controller = LLMController(
@@ -342,8 +343,8 @@ def main():
     parser.add_argument("--max-questions", type=int, default=50)
     parser.add_argument("--cache-dir", default="./locomo_trg_fixed")
     parser.add_argument("--rebuild", action="store_true", help="Force rebuild memory")
-    parser.add_argument("--model", type=str, default="gpt-4o-mini",
-                       help="OpenAI model to use (e.g., gpt-4o-mini, gpt-4.1-mini, gpt-3.5-turbo, gpt-4o)")
+    parser.add_argument("--model", type=str, default=get_default_model(),
+                       help="LLM model (defaults to DEFAULT_MODEL in .env)")
     parser.add_argument("--embedding-model", type=str, default="minilm",
                        choices=["minilm", "openai"],
                        help="Embedding model to use: 'minilm' (all-MiniLM-L6-v2, 384-dim) or 'openai' (text-embedding-3-small, 1536-dim)")
@@ -392,7 +393,11 @@ def main():
 
     print(f"  Categories to test: {sorted(categories_to_test)}")
     category_names = {1: "Multi-hop", 2: "Temporal", 3: "Open-domain", 4: "Single-hop", 5: "Adversarial"}
-    print(f"  Category types: {', '.join([f'{c}:{category_names.get(c, 'Unknown')}' for c in sorted(categories_to_test)])}")
+    category_types = [
+        f"{category}:{category_names.get(category, 'Unknown')}"
+        for category in sorted(categories_to_test)
+    ]
+    print(f"  Category types: {', '.join(category_types)}")
 
     # Show parallel mode status
     # if args.parallel:

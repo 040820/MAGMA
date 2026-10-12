@@ -36,6 +36,7 @@ from .vector_db import (
 )
 
 from .keyword_enrichment import KeywordEnricher
+from utils.llm_config import get_default_model
 
 import sys
 import os
@@ -76,7 +77,7 @@ class TemporalResonanceGraphMemory:
                  encoder_model: str = 'all-MiniLM-L6-v2',
                  embedding_model: str = 'minilm',
                  llm_backend: str = 'openai',
-                 llm_model: str = 'gpt-4o-mini',
+                 llm_model: Optional[str] = None,
                  persist_dir: Optional[str] = None,
                  enable_async: bool = False):
         """
@@ -109,6 +110,7 @@ class TemporalResonanceGraphMemory:
         )
 
         # Initialize LLM if available
+        llm_model = get_default_model(llm_model)
         self.llm_controller = None
         if LLM_AVAILABLE and llm_backend:
             try:

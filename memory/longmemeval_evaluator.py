@@ -7,23 +7,23 @@ Supports evaluation of different question types with appropriate rubrics.
 
 import os
 from typing import Dict, Any, Optional
-from openai import OpenAI
 from dotenv import load_dotenv
+from utils.llm_config import create_openai_client, get_default_model
 
 load_dotenv()
 
 class LongMemEvalEvaluator:
     """LongMemEval Result Evaluator with question-type-specific prompts"""
 
-    def __init__(self, model: str = "gpt-4o-mini"):
+    def __init__(self, model: str = None):
         """
         Initialize evaluator
 
         Args:
             model: Model used for evaluation
         """
-        self.model = model
-        self.client = OpenAI()
+        self.model = get_default_model(model)
+        self.client = create_openai_client()
 
         # Evaluation prompt templates based on LongMemEval standards
         self.TEMPORAL_REASONING_PROMPT = """

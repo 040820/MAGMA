@@ -1,5 +1,7 @@
 # MAGMA: A Multi-Graph based Agentic Memory Architecture
 
+[中文版（中文 README）](README_zh.md)
+
 **A principled, multi-graph memory system for long-horizon agentic reasoning.**
 
 <p align="center">
@@ -46,8 +48,8 @@
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/FredJiang0324/MAMGA.git
-cd MAMGA
+git clone https://github.com/FredJiang0324/MAGMA.git
+cd MAGMA
 ```
 
 2. Create and activate a virtual environment:
@@ -64,8 +66,10 @@ pip install -r requirements.txt
 4. Set up environment variables:
 ```bash
 cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
+# Edit .env and set OPENAI_API_KEY and DEFAULT_MODEL
 ```
+
+For a local OpenAI-compatible server such as vLLM, set `OPENAI_BASE_URL` to the server URL (usually ending in `/v1`), set `OPENAI_API_KEY=EMPTY` if authentication is disabled, and set `DEFAULT_MODEL` to the model ID served by vLLM. Leave `OPENAI_BASE_URL` unset when using OpenAI directly. A `--model` command-line argument overrides `DEFAULT_MODEL`.
 
 ## Quick Start
 
@@ -73,7 +77,7 @@ cp .env.example .env
 
 ```bash
 # Test on LoCoMo dataset (10 samples included)
-python test_fixed_memory.py --sample 0 --model gpt-4o-mini --max-questions 10 --category-to-test 1,2,3,4,5
+python test_fixed_memory.py --sample 0 --max-questions 10 --category-to-test 1,2,3,4,5
 
 # Test specific question categories
 python test_fixed_memory.py --sample 0 --category-to-test 1  # Multi-hop only
@@ -142,11 +146,7 @@ python test_fixed_memory.py --embedding-model openai
 
 ### LLM Models
 
-Supports OpenAI models:
-- `gpt-4o-mini` (Default)
-- `gpt-4.1-mini` 
-- `gpt-4o` 
-- `gpt-3.5-turbo` 
+The default model is configured by `DEFAULT_MODEL` in `.env` (defaults to `gpt-4o-mini`). You can use an OpenAI model or a model ID served by an OpenAI-compatible endpoint such as vLLM.
 
 ### Cache Management
 

@@ -3,13 +3,13 @@ import json
 from collections import defaultdict
 
 import numpy as np
-from openai import OpenAI
 import os
 import dotenv
+from utils.llm_config import create_openai_client, get_default_model
 
 dotenv.load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = create_openai_client()
 
 ACCURACY_PROMPT = """
 Score the answer on a scale from 0.0 to 1.0 based on semantic correctness.
@@ -133,7 +133,7 @@ def evaluate_llm_judge(question, gold_answer, generated_answer):
         float: Score between 0.0 and 1.0 representing semantic correctness
     """
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=get_default_model(),
         messages=[
             {
                 "role": "system",

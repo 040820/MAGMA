@@ -20,6 +20,7 @@ from .trg_memory import TemporalResonanceGraphMemory, Link, LinkType
 from .graph_db import SessionNode, NodeType, LinkSubType
 from .episode_segmenter import EpisodeSegmenter, Episode
 from .temporal_parser import TemporalParser
+from utils.llm_config import get_default_model, has_llm_config
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class MemoryBuilder:
     def __init__(
         self,
         cache_dir: str,
-        llm_model: str = "gpt-4o-mini",
+        llm_model: Optional[str] = None,
         use_episodes: bool = False,
         embedding_model: str = "minilm"
     ):
@@ -52,6 +53,7 @@ class MemoryBuilder:
         from .answer_formatter import AnswerFormatter
 
         self.cache_dir = Path(cache_dir)
+        llm_model = get_default_model(llm_model)
         self.llm_model = llm_model
         self.use_episodes = use_episodes
         self.embedding_model = embedding_model
@@ -66,7 +68,7 @@ class MemoryBuilder:
 
         api_key = os.getenv('OPENAI_API_KEY')
         self.llm_controller = None
-        if api_key:
+        if has_llm_config():
             self.llm_controller = LLMController(
                 backend='openai',
                 model=llm_model,
@@ -77,7 +79,7 @@ class MemoryBuilder:
                 "\n" + "="*60 +
                 "\nWARNING: OPENAI_API_KEY not set!" +
                 "\n- Using simple extraction fallback (limited accuracy)" +
-                "\n- Set OPENAI_API_KEY environment variable for better results" +
+                "\n- Set OPENAI_API_KEY for OpenAI or OPENAI_BASE_URL for a local compatible server" +
                 "\n" + "="*60
             )
 

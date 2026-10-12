@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 import pickle
 from pathlib import Path
 import time
+from .llm_config import create_openai_client, get_default_model
 
 # Optional imports
 try:
@@ -61,15 +62,12 @@ class BaseLLMController(ABC):
         pass
 
 class OpenAIController(BaseLLMController):
-    def __init__(self, model: str = "gpt-4", api_key: Optional[str] = None):
+    def __init__(self, model: Optional[str] = None, api_key: Optional[str] = None):
         try:
-            from openai import OpenAI
-            self.model = model
-            if api_key is None:
-                api_key = os.getenv('OPENAI_API_KEY')
-            if api_key is None:
-                raise ValueError("OpenAI API key not found. Set OPENAI_API_KEY environment variable.")
-            self.client = OpenAI(api_key=api_key)
+            self.model = get_default_model(model)
+            if not api_key and not os.getenv('OPENAI_API_KEY') and not os.getenv('OPENAI_BASE_URL'):
+                raise ValueError("Set OPENAI_API_KEY or OPENAI_BASE_URL in the environment.")
+            self.client = create_openai_client(api_key)
             # Track token usage across all API calls
             self.token_usage = {
                 'prompt_tokens': [],
@@ -169,12 +167,12 @@ class LLMController:
     """LLM-based controller for memory metadata generation"""
     def __init__(self, 
                  backend: Literal["openai", "ollama"] = "openai",
-                 model: str = "gpt-4", 
+                 model: Optional[str] = None,
                  api_key: Optional[str] = None):
         if backend == "openai":
             self.llm = OpenAIController(model, api_key)
         elif backend == "ollama":
-            self.llm = OllamaController(model)
+            self.llm = OllamaController(model or "llama2")
         else:
             raise ValueError("Backend must be either 'openai' or 'ollama'")
 
@@ -549,7 +547,7 @@ class AgenticMemorySystem:
     def __init__(self, 
                  model_name: str = 'all-MiniLM-L6-v2',
                  llm_backend: str = "openai",
-                 llm_model: str = "gpt-4o-mini",
+                 llm_model: Optional[str] = None,
                  evo_threshold: int = 100,
                  api_key: Optional[str] = None):
         self.memories = {}  # id -> MemoryNote
@@ -765,7 +763,7 @@ def run_tests():
     memory_system = AgenticMemorySystem(
         model_name='all-MiniLM-L6-v2',
         llm_backend='openai',
-        llm_model='gpt-4o-mini'
+        llm_model=get_default_model()
     )
     
     print("\nAdding test memories...")

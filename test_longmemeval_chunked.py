@@ -40,6 +40,7 @@ from memory.query_engine import QueryEngine
 from memory.answer_formatter import AnswerFormatter
 from memory.longmemeval_evaluator import LongMemEvalEvaluator
 from utils.memory_layer import LLMController
+from utils.llm_config import create_openai_client, get_default_model, has_llm_config
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ logger = logging.getLogger(__name__)
 class ChunkedLongMemEvalTester:
     """Improved test harness with better retrieval strategies"""
 
-    def __init__(self, model: str = "gpt-4o-mini", embedding_model: str = "minilm",
+    def __init__(self, model: str = None, embedding_model: str = "minilm",
                  chunk_size: int = 4, use_episodes: bool = False, memory_level: str = "session"):
         """
         Initialize the improved tester
@@ -57,7 +58,7 @@ class ChunkedLongMemEvalTester:
             use_episodes: If True, use episode/session-level retrieval
             memory_level: 'session' for session-level or 'message' for message-level memory
         """
-        self.model = model
+        self.model = get_default_model(model)
         self.embedding_model = embedding_model
         self.chunk_size = chunk_size
         self.use_episodes = use_episodes
@@ -65,8 +66,8 @@ class ChunkedLongMemEvalTester:
 
         # Initialize LLM controller
         api_key = os.getenv('OPENAI_API_KEY')
-        if not api_key:
-            raise ValueError("OPENAI_API_KEY not found in environment")
+        if not has_llm_config():
+            raise ValueError("Set OPENAI_API_KEY or OPENAI_BASE_URL in the environment")
 
         self.llm_controller = LLMController(
             backend='openai',
@@ -617,8 +618,7 @@ COMPREHENSIVE SUMMARY (include EVERYTHING important):"""
                     embeddings_to_add.append((f"keywords_{s_idx}", keywords_embedding))
 
             else:
-                from openai import OpenAI
-                client = OpenAI()
+                client = create_openai_client()
                 response = client.embeddings.create(
                     model="text-embedding-3-small",
                     input=session_summary[:8000]
@@ -2155,7 +2155,8 @@ def main():
     parser = argparse.ArgumentParser(description="Chunked LongMemEval Test with Improved Retrieval")
     parser.add_argument('--dataset', type=str, required=True, help='Path to dataset')
     parser.add_argument('--max-questions', type=int, default=None)
-    parser.add_argument('--model', type=str, default='gpt-4o-mini')
+    parser.add_argument('--model', type=str, default=get_default_model(),
+                        help='LLM model (defaults to DEFAULT_MODEL in .env)')
     parser.add_argument('--embedding-model', type=str, default='minilm', choices=['minilm', 'openai'])
     parser.add_argument('--chunk-size', type=int, default=4, help='Number of turns per chunk')
     parser.add_argument('--use-episodes', action='store_true', help='Use episode-based memory')
